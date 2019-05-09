@@ -35,6 +35,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
@@ -45,14 +46,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Button btn_Options;
     private Button btn_CustomOptions;
     private Button btn_CustomTime;
+    private Button btn_CitySelect;   //城市选择按钮
 
     private TimePickerView pvTime, pvCustomTime, pvCustomLunar;
-    private OptionsPickerView pvOptions, pvCustomOptions, pvNoLinkOptions;
+    private OptionsPickerView pvOptions, pvCustomOptions, pvNoLinkOptions, cityPicker;
     private ArrayList<CardBean> cardItem = new ArrayList<>();
 
     private ArrayList<String> food = new ArrayList<>();
     private ArrayList<String> clothes = new ArrayList<>();
     private ArrayList<String> computer = new ArrayList<>();
+
+    //城市三级选项数据
+    private List<String> optionsOneItems = new ArrayList<>();
+    private ArrayList<ArrayList<String>> optionsTwoItems = new ArrayList<>();
+    private ArrayList<ArrayList<ArrayList<String>>> optionsThreeItems = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,6 +67,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         setContentView(R.layout.activity_main);
 
         //等数据加载完毕再初始化并显示Picker,以免还未加载完数据就显示,造成APP崩溃。
+        initCityData();
         getOptionData();
 
         initTimePicker();
@@ -68,6 +76,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         initOptionPicker();
         initCustomOptionPicker();
         initNoLinkOptionsPicker();
+        initCityPicker();
 
         Button btn_Time = (Button) findViewById(R.id.btn_Time);
         btn_Options = (Button) findViewById(R.id.btn_Options);
@@ -75,6 +84,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btn_CustomTime = (Button) findViewById(R.id.btn_CustomTime);
         Button btn_no_linkage = (Button) findViewById(R.id.btn_no_linkage);
         Button btn_to_Fragment = (Button) findViewById(R.id.btn_fragment);
+        btn_CitySelect = findViewById(R.id.btn_city_select);
 
         btn_Time.setOnClickListener(this);
         btn_Options.setOnClickListener(this);
@@ -82,6 +92,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btn_CustomTime.setOnClickListener(this);
         btn_no_linkage.setOnClickListener(this);
         btn_to_Fragment.setOnClickListener(this);
+        btn_CitySelect.setOnClickListener(this);
 
         findViewById(R.id.btn_GotoJsonData).setOnClickListener(this);
         findViewById(R.id.btn_lunar).setOnClickListener(this);
@@ -92,7 +103,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View v) {
         if (v.getId() == R.id.btn_Time && pvTime != null) {
             // pvTime.setDate(Calendar.getInstance());
-           /* pvTime.show(); //show timePicker*/
+            /* pvTime.show(); //show timePicker*/
             pvTime.show(v);//弹出时间选择器，传递参数过去，回调的时候则可以绑定此view
         } else if (v.getId() == R.id.btn_Options && pvOptions != null) {
             pvOptions.show(); //弹出条件选择器
@@ -108,6 +119,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             startActivity(new Intent(MainActivity.this, FragmentTestActivity.class));
         } else if (v.getId() == R.id.btn_lunar) {
             pvCustomLunar.show();
+        } else if (v.getId() == R.id.btn_city_select) {
+            cityPicker.show();
         }
     }
 
@@ -273,7 +286,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 .setBgColor(Color.BLACK)//滚轮背景颜色 Night mode
                 .setSubmitColor(Color.WHITE)
                 .setCancelColor(Color.WHITE)*/
-               /*.animGravity(Gravity.RIGHT)// default is center*/
+                /*.animGravity(Gravity.RIGHT)// default is center*/
                 .setDate(selectedDate)
                 .setRangDate(startDate, endDate)
                 .setLayoutRes(R.layout.pickerview_custom_time, new CustomListener() {
@@ -321,7 +334,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 //返回的分别是三个级别的选中位置
                 String tx = options1Items.get(options1).getPickerViewText()
                         + options2Items.get(options1).get(options2)
-                       /* + options3Items.get(options1).get(options2).get(options3).getPickerViewText()*/;
+                        /* + options3Items.get(options1).get(options2).get(options3).getPickerViewText()*/;
                 btn_Options.setText(tx);
             }
         })
@@ -508,5 +521,59 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         computer.add("HP");
     }
 
+    private void initCityPicker() {
+        cityPicker = new OptionsPickerBuilder(this, new OnOptionsSelectListener() {
+            @Override
+            public void onOptionsSelect(int options1, int options2, int options3, View v) {
+                String opt1tx = optionsOneItems.size() > 0 ?
+                        optionsOneItems.get(options1) : "";
+                String opt2tx = optionsTwoItems.size() > 0
+                        && optionsTwoItems.get(options1).size() > 0 ?
+                        optionsTwoItems.get(options1).get(options2) : "";
+                String opt3tx = optionsTwoItems.size() > 0
+                        && optionsThreeItems.get(options1).size() > 0
+                        && optionsThreeItems.get(options1).get(options2).size() > 0 ?
+                        optionsThreeItems.get(options1).get(options2).get(options3) : "";
+                String tx = opt1tx + " " + opt2tx + " " + opt3tx;
+                //areaResult.setText(tx);
+                Toast.makeText(MainActivity.this, tx, Toast.LENGTH_SHORT).show();
+            }
+        })      .setTitleText("城市选择")
+                .setContentTextSize(18)
+                .isRestoreItem(true)   //前一选项变化后面选项复位到第一项
+                .build();
+        cityPicker.setPicker(optionsOneItems, optionsTwoItems, optionsThreeItems);
+    }
+
+    private void initCityData() {
+        optionsOneItems.add("北京");
+        optionsOneItems.add("山东");
+
+        ArrayList<String> cityList_Province1 = new ArrayList<>();
+        cityList_Province1.add("北京市");
+        optionsTwoItems.add(cityList_Province1);
+        ArrayList<String> cityList_Province2 = new ArrayList<>();
+        cityList_Province2.add("济南市");
+        cityList_Province2.add("青岛市");
+        optionsTwoItems.add(cityList_Province2);
+
+        ArrayList<String> areaList_City1 = new ArrayList<>();  //北京市下的所有区
+        areaList_City1.add("海淀区");
+        areaList_City1.add("朝阳区");
+        ArrayList<ArrayList<String>> areaList_Province1 = new ArrayList<>(); //北京省下所有区的数组
+        areaList_Province1.add(areaList_City1);
+        ArrayList<ArrayList<String>> areaList_Province2 = new ArrayList<>(); //山东省下所有区的数组
+        ArrayList<String> areaList_City2 = new ArrayList<>();  //济南市下的所有区
+        areaList_City2.add("历下区");
+        areaList_City2.add("槐荫区");
+        ArrayList<String> areaList_City3 = new ArrayList<>();  //青岛市下的所有区
+        areaList_City3.add("市南区");
+        areaList_City3.add("城阳区");
+        areaList_Province2.add(areaList_City2);
+        areaList_Province2.add(areaList_City3);
+
+        optionsThreeItems.add(areaList_Province1);
+        optionsThreeItems.add(areaList_Province2);
+    }
 
 }
